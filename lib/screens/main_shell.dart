@@ -28,7 +28,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return ResponsiveLayout(
-
+      // 📱 MOBILE VIEW (Scaffold with Drawer attached directly here)
       mobileBody: Scaffold(
         drawer: Drawer(
           child: SideMenu(
