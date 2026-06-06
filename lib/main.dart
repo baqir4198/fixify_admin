@@ -28,7 +28,7 @@ class FixifyAdminApp extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
         primarySwatch: Colors.blue,
       ),
-      home: const MainShell(), // Pehle login screen khulegi
+      home: const MainShell(),
     );
   }
 }
