@@ -97,4 +97,36 @@ class AdminService {
       return false;
     }
   }
+  // 7. Tamam Customers ki List Fetch Karein
+  Future<List<Map<String, dynamic>>> getAllCustomers() async {
+    try {
+      // Assuming customers are in 'profiles' table where type/role is 'customer'
+      // Agar aapke paas role ka column nahi hai, toh simple select('*') bhi kar sakte hain
+      final List<dynamic> response = await _supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'customer') // Agar customer filtering karni ho
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print("Error fetching customers list: $e");
+      return [];
+    }
+  }
+
+  // 8. Customer Ko Block ya Unblock Karein
+  Future<bool> updateCustomerBlockStatus(String customerId, bool isBlocked) async {
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'is_blocked': isBlocked}) // Assuming column name is 'is_blocked'
+          .eq('id', customerId);
+
+      return true;
+    } catch (e) {
+      print("Error updating customer block status: $e");
+      return false;
+    }
+  }
 }
