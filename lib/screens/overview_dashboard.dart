@@ -31,6 +31,17 @@ class _OverviewDashboardState extends State<OverviewDashboard> {
     });
   }
 
+  // Live status ke mutabiq colors badalne ke liye helper function
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending': return Colors.orange;
+      case 'Ongoing': return Colors.blue;
+      case 'Completed': return Colors.green;
+      case 'Cancelled': return Colors.red;
+      default: return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -38,7 +49,6 @@ class _OverviewDashboardState extends State<OverviewDashboard> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      // Refresh karne ke liye top par button ya option rakh sakte hain
       floatingActionButton: FloatingActionButton(
         onPressed: _refreshData,
         backgroundColor: Colors.blue,
@@ -128,7 +138,7 @@ class _OverviewDashboardState extends State<OverviewDashboard> {
 
                 const SizedBox(height: 40),
 
-                // Platform Activity Area
+                // Platform Activity Area (100% Live with StreamBuilder)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(25),
@@ -137,20 +147,72 @@ class _OverviewDashboardState extends State<OverviewDashboard> {
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Recent Platform Activity", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 15),
-                      Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(40.0),
-                          child: Text(
-                            "Live database counters linked completely.",
-                            style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      )
+                      const Text(
+                          "Recent Platform Activity",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Live Bookings Listener
+                      StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: _adminService.getRecentBookingsStream(),
+                        builder: (context, streamSnapshot) {
+                          if (streamSnapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: LinearProgressIndicator(color: Colors.blue));
+                          }
+                          if (streamSnapshot.hasError || !streamSnapshot.hasData || streamSnapshot.data!.isEmpty) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: Text("No recent booking logs found.", style: TextStyle(color: Colors.grey)),
+                              ),
+                            );
+                          }
+
+                          final liveBookings = streamSnapshot.data!;
+
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: liveBookings.length,
+                            separatorBuilder: (context, index) => const Divider(color: Color(0xFFF1F5F9)),
+                            itemBuilder: (context, index) {
+                              final booking = liveBookings[index];
+
+                              // Schema ke mutabiq exact columns
+                              String service = booking['service_name'] ?? 'Unknown Service';
+                              String client = booking['customer_name'] ?? 'Client';
+                              String price = booking['price'] ?? '0';
+                              String status = booking['status'] ?? 'Pending';
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundColor: _getStatusColor(status).withOpacity(0.1),
+                                  child: Icon(Icons.circle_notifications_rounded, color: _getStatusColor(status)),
+                                ),
+                                title: Text(service, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                subtitle: Text("Booked by $client", style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                                trailing: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text("Rs. $price", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        status,
+                                        style: TextStyle(color: _getStatusColor(status), fontWeight: FontWeight.bold, fontSize: 11)
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
                 )

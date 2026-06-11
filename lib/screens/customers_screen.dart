@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../services/admin_serivce.dart';
 
 class CustomersScreen extends StatefulWidget {
@@ -43,7 +42,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update user status."), backgroundColor: Colors.redAccent),
+          const SnackBar(content: Text("Database validation error or missing column."), backgroundColor: Colors.redAccent),
         );
       }
     }
@@ -59,9 +58,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _customersFuture,
         builder: (context, snapshot) {
+          // 1. Loading State
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Colors.blue));
           }
+          // 2. Error State
           if (snapshot.hasError || snapshot.data == null) {
             return const Center(child: Text("Database se customers load nahi ho sakay."));
           }
@@ -102,14 +103,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   itemBuilder: (context, index) {
                     final customer = customers[index];
 
-                    // ⚠️ Column names aapke DB table structure k mutabiq hone chahiye
+                    // Schema ke mutabiq exact keys
                     String id = customer['id'].toString();
                     String name = customer['name'] ?? 'No Name';
                     String email = customer['email'] ?? 'No Email';
-                    bool isBlocked = customer['is_blocked'] ?? false;
 
-                    // Agar bookings count aap join se la rahe hain toh theek, warna abhi 0 ya static rakh sakte hain
-                    int totalOrders = customer['total_bookings'] ?? 0;
+                    // Agar table mein 'is_blocked' ka column abhi tak nahi banaya toh safe toggle k liye default value false rkhi h
+                    bool isBlocked = customer['is_blocked'] ?? false;
 
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -145,11 +145,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                 Text(
                                   email,
                                   style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Total Orders: $totalOrders",
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.indigo),
                                 ),
                               ],
                             ),
