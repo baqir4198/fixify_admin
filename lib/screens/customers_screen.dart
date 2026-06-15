@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/admin_serivce.dart';
+import '../services/admin_service.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});

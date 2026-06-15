@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/admin_serivce.dart';
+import '../services/admin_service.dart'; // Spelling typo fix kiya: serivce -> service
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -106,13 +106,18 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     String id = booking['id'].toString();
                     String serviceName = booking['service_name'] ?? 'General Service';
                     String customerName = booking['customer_name'] ?? 'Client';
-                    String providerName = booking['provider_id'] ?? 'Assigned Handyman';
+                    String providerId = booking['provider_id']?.toString() ?? '';
                     String price = booking['price'] ?? '0';
                     String status = booking['status'] ?? 'Pending';
                     String date = booking['booking_date'] ?? '';
                     String time = booking['booking_time'] ?? '';
 
                     Color statusColor = _getStatusColor(status);
+
+                    // Provider name/ID safe fallback check string short krne k liye
+                    String displayProvider = providerId.isEmpty
+                        ? 'Not Assigned'
+                        : (providerId.length > 6 ? providerId.substring(0, 6) : providerId);
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -192,7 +197,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                       children: [
                                         const Icon(Icons.engineering_outlined, size: 16, color: Colors.grey),
                                         const SizedBox(width: 4),
-                                        Text("Handyman ID: ${providerName.length > 6 ? providerName.substring(0, 6) : providerName}", style: const TextStyle(color: Colors.black87, fontSize: 13)),
+                                        Text("Handyman ID: $displayProvider", style: const TextStyle(color: Colors.black87, fontSize: 13)),
                                       ],
                                     ),
                                     if (date.isNotEmpty)

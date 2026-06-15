@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/admin_serivce.dart';
+import '../services/admin_service.dart';
 import '../widgets/stat_card.dart';
 
 class OverviewDashboard extends StatefulWidget {

@@ -60,7 +60,6 @@ class AdminService {
 
       double total = 0;
       for (var booking in response) {
-        // Price text data type hai schema mein, isliye double.tryParse must hai
         total += double.tryParse(booking['price'].toString()) ?? 0.0;
       }
       return total;
@@ -77,7 +76,7 @@ class AdminService {
           .from('users')
           .select('*')
           .eq('role', 'provider')
-          .order('updated_at', ascending: false); // schema mein updated_at hai
+          .order('updated_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -107,7 +106,7 @@ class AdminService {
     try {
       await _supabase
           .from('users')
-          .update({'role': newStatus}) // Agar custom status column dala hai toh 'role' ki jagah uska naam likhein
+          .update({'role': newStatus})
           .eq('id', providerId);
 
       return true;
@@ -120,8 +119,6 @@ class AdminService {
   // 8. Customer Ko Block ya Unblock Karein
   Future<bool> updateCustomerBlockStatus(String customerId, bool isBlocked) async {
     try {
-      // Note: Agar aapne users table mein baad mein 'is_blocked' ka column dala hai toh yeh chalega.
-      // Agar nahi dala toh pehle database mein column add karna hoga.
       await _supabase
           .from('users')
           .update({'is_blocked': isBlocked})
@@ -133,15 +130,15 @@ class AdminService {
       return false;
     }
   }
+
   // 9. Recent Bookings ki Live Stream (Real-time updates ke liye)
   Stream<List<Map<String, dynamic>>> getRecentBookingsStream() {
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false) // Nayi bookings top par aayengi
-        .limit(5); // Dashboard par sirf top 5 recent activities dikhane k liye
+        .order('created_at', ascending: false)
+        .limit(5);
   }
-
 
   // 10. Tamam Bookings ki List Fetch Karein (Global Log)
   Future<List<Map<String, dynamic>>> getAllBookings() async {
@@ -149,7 +146,7 @@ class AdminService {
       final List<dynamic> response = await _supabase
           .from('bookings')
           .select('*')
-          .order('created_at', ascending: false); // Nayi bookings top par aayengi
+          .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -169,6 +166,70 @@ class AdminService {
       return true;
     } catch (e) {
       print("Error updating booking status: $e");
+      return false;
+    }
+  }
+
+  // ==========================================
+  // 🔥 NEW: CATEGORIES METHODS (Yahan Add Kar Diye Hain)
+  // ==========================================
+
+  // 12. Tamam Categories Fetch Karein + Unke Active Handymen Ka Count Bhi Layein
+  Future<List<Map<String, dynamic>>> getAllCategoriesWithCount() async {
+    try {
+      final List<dynamic> catResponse = await _supabase
+          .from('categories')
+          .select('*')
+          .order('name', ascending: true);
+
+      List<Map<String, dynamic>> finalCategories = [];
+
+      for (var cat in catResponse) {
+        String catName = cat['name'] ?? '';
+
+        final providersCountResponse = await _supabase
+            .from('users')
+            .select()
+            .eq('role', 'provider')
+            .eq('profession', catName) // Users table mein jo profession field hai
+            .count(CountOption.exact);
+
+        finalCategories.add({
+          "id": cat['id'],
+          "name": catName,
+          "icon_code": cat['icon_code'] ?? 'construction',
+          "providersCount": providersCountResponse.count ?? 0,
+        });
+      }
+
+      return finalCategories;
+    } catch (e) {
+      print("Error fetching categories with count: $e");
+      return [];
+    }
+  }
+
+  // 13. Nayi Category Insert Karein
+  Future<bool> addCategory(String categoryName) async {
+    try {
+      await _supabase.from('categories').insert({
+        'name': categoryName,
+        'icon_code': 'construction', // Default text code jo screen par check hota h
+      });
+      return true;
+    } catch (e) {
+      print("Error adding category to Supabase: $e");
+      return false;
+    }
+  }
+
+  // 14. Category Delete Karein
+  Future<bool> deleteCategory(dynamic categoryId) async {
+    try {
+      await _supabase.from('categories').delete().eq('id', categoryId);
+      return true;
+    } catch (e) {
+      print("Error deleting category from Supabase: $e");
       return false;
     }
   }
