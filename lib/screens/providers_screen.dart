@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/admin_service.dart'; // Connected directly to live service
+import '../services/admin_service.dart';
 
 class ProvidersScreen extends StatefulWidget {
   const ProvidersScreen({super.key});
