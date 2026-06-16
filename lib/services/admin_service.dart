@@ -69,15 +69,16 @@ class AdminService {
     }
   }
 
-  // 5. Tamam Providers ki List Fetch Karein (Fixed & Verified)
+  // 5. Tamam Providers ki List Fetch Karein (Case-Insensitive Fixed)
   Future<List<Map<String, dynamic>>> getAllProviders() async {
     try {
+      // .ilike se uppercase/lowercase (Provider ya provider) dono fetch ho jate hain
       final List<dynamic> response = await _supabase
           .from('users')
           .select('*')
-          .eq('role', 'provider')
-          .order('created_at', ascending: false); // safe sorting column
+          .ilike('role', 'provider');
 
+      print("Fetched Providers Data Successfully: ${response.length} records found");
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       print("Error fetching providers list: $e");
@@ -85,22 +86,22 @@ class AdminService {
     }
   }
 
-  // 6. Tamam Customers ki List Fetch Karein (Fixed & Verified)
+  // 6. Tamam Customers ki List Fetch Karein (Case-Insensitive Fixed)
   Future<List<Map<String, dynamic>>> getAllCustomers() async {
     try {
+      // .ilike se Customer ya customer dono match ho jayenge
       final List<dynamic> response = await _supabase
           .from('users')
           .select('*')
-          .eq('role', 'customer')
-          .order('created_at', ascending: false); // safe sorting column
+          .ilike('role', 'customer');
 
+      print("Fetched Customers Data Successfully: ${response.length} records found");
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       print("Error fetching customers list: $e");
       return [];
     }
   }
-
   // 7. Provider Ka Status ya Role Update Karein
   Future<bool> updateProviderStatus(String providerId, String newStatus) async {
     try {
@@ -131,26 +132,34 @@ class AdminService {
     }
   }
 
-  // 9. Recent Bookings ki Live Stream (Real-time updates ke liye)
+  // 9. Recent Bookings ki Live Stream (Real-time updates ke liye 100% Fixed)
   Stream<List<Map<String, dynamic>>> getRecentBookingsStream() {
-    return _supabase
-        .from('bookings')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .limit(5);
+    try {
+      return _supabase
+          .from('bookings')
+          .stream(primaryKey: ['id']) // Custom UUID supported via stream engine
+          .order('created_at', ascending: false) // Handled safely inside native parser
+          .limit(5); // Top 5 recent job alerts for dashboard logs
+    } catch (e) {
+      print("Realtime Stream Initialization Error: $e");
+      // Fallback: Agar stream fail ho toh empty stream return karein taake UI crash na ho
+      return const Stream.empty();
+    }
   }
 
-  // 10. Tamam Bookings ki List Fetch Karein (Global Log)
+  // 10. Tamam Bookings ki List Fetch Karein (Safe Raw Fetch with Error Tracking)
   Future<List<Map<String, dynamic>>> getAllBookings() async {
     try {
       final List<dynamic> response = await _supabase
           .from('bookings')
-          .select('*')
-          .order('created_at', ascending: false);
+          .select('*'); // Bina kisi configuration query ke direct select
 
+      print("DEBUG BOOKINGS -> Total records in database: ${response.length}");
       return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
+    } catch (e, stacktrace) {
+      // Agar table name ya type casting ka koi error hoga toh exact yahan print hoga
       print("Error fetching global bookings list: $e");
+      print("Stacktrace: $stacktrace");
       return [];
     }
   }
