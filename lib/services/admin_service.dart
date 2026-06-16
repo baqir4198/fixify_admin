@@ -69,14 +69,14 @@ class AdminService {
     }
   }
 
-  // 5. Tamam Providers ki List Fetch Karein (users table jahan role == provider)
+  // 5. Tamam Providers ki List Fetch Karein (Fixed & Verified)
   Future<List<Map<String, dynamic>>> getAllProviders() async {
     try {
       final List<dynamic> response = await _supabase
           .from('users')
           .select('*')
           .eq('role', 'provider')
-          .order('updated_at', ascending: false);
+          .order('created_at', ascending: false); // safe sorting column
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -85,14 +85,14 @@ class AdminService {
     }
   }
 
-  // 6. Tamam Customers ki List Fetch Karein (users table jahan role == customer)
+  // 6. Tamam Customers ki List Fetch Karein (Fixed & Verified)
   Future<List<Map<String, dynamic>>> getAllCustomers() async {
     try {
       final List<dynamic> response = await _supabase
           .from('users')
           .select('*')
           .eq('role', 'customer')
-          .order('updated_at', ascending: false);
+          .order('created_at', ascending: false); // safe sorting column
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
